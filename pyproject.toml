@@ -1,0 +1,22 @@
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=3.2,<4"]
+
+[project]
+name = "soundtrack"
+version = "0.0.1"
+authors = [
+    {name = "Krafter"}
+]
+description = "A Discord Bot to play soundtracks in VC "
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "nextcord[voice]",
+    "logging42",
+    "pyxdg"
+]
+
+[project.urls]
+Home = "https://github.com/TheKrafter/Soundtrack"
+Source = "https://github.com/TheKrafter/Soundtrack"
