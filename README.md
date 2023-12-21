@@ -1,3 +1,5 @@
+<div align="center"><img src="src/assets/icon.png"></div>
+
 # Soundtrack
 A Discord Bot to play soundtracks in VC
 

@@ -34,17 +34,24 @@ os.makedirs(f"{config_dir}", exist_ok=True)
 default_config = {
     "guild": None,
     "token": None,
+    "client_id": None,
     "role": None,
 }
 
 if os.path.exists(config_path):
     with open(config_path, "r") as file:
         global config
-        config = yaml.full_load(file)
-
-    verify_config(config, default_config)
+        config = yaml.load(file)
 else:
-    auto_configure() #TODO
+    global config
+    config = auto_configure()
+    if config == None:
+        logger.critical(f'Configuration file does not exist!\n -> You must either run interactive configuration, or copy an existing configuration file to {config_path}.')
+        sys.exit(1)
+    else:
+        with open(config_path, "w") as file:
+            yaml.dump(config, file)
+        logger.info('')
 
 data_dir = os.path.join(BaseDirectory.xdg_data_home, 'soundtrack')
 os.makedirs(f"{data_dir}", exist_ok=True)
@@ -68,4 +75,5 @@ async def on_ready():
 
 # Commands
 @bot.slash_command(description='Upload a Track', dm_permission=False)
-async def upload(interaction: nextcord.Interaction, name: nextcord.SlashOption(description='The title for this track set'))
+async def upload(interaction: nextcord.Interaction, name: nextcord.SlashOption(description='The title for this track set')):
+    """ Slash Command: Allows users to upload tracks and saves them to disk. """
