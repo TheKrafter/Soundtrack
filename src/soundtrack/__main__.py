@@ -75,5 +75,7 @@ async def on_ready():
 
 # Commands
 @bot.slash_command(description='Upload a Track', dm_permission=False)
-async def upload(interaction: nextcord.Interaction, name: nextcord.SlashOption(description='The title for this track set')):
+async def upload(interaction: nextcord.Interaction, name: str = nextcord.SlashOption(description='The title for this track set', min_length=3, max_length=15, required=True),
+    intro: nextcord.Attachment = nextcord.SlashOption(description='Track to play at start of Soundtrack', required=True),
+    loop: nextcord.Attachment = nextcord.SlashOption(description='Track to loop once `intro` ends', required=True)):
     """ Slash Command: Allows users to upload tracks and saves them to disk. """
