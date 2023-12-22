@@ -7,7 +7,7 @@ from requests.models import PreparedRequest
 
 
 def get_invite_url(client_id: str):
-    """ Creates a Bot Invite URL based on the given ``client_id`` """
+    """ Creates a Bot Invite URL based on the given `client_id` """
     base_url = "https://discord.com/api/oauth2/authorize"
     params = {
         "client_id": client_id,
@@ -26,14 +26,14 @@ def auto_configure():
         while True:
             print('1. Obtain a bot token from https://discord.com/developers and paste it below.')
             token = input(' -> ').strip(' \n')
-            print('2. Paste your Client ID from https://discord.com/developers below')
+            print('2. Paste your Application ID from https://discord.com/developers below')
             client_id = input(' -> ').strip(' \n')
             print('3. Paste the ID of the Guild this bot will be locked to.')
             guild = input(' -> ').strip(' \n')
             print('4. Paste the ID of the Role in said Guild that has permission to upload and edit soundtracks.')
             role = input(' -> ').strip(' \n')
 
-            print(f'\nDoes this look right?\n1. Bot Token - {token}\n2. Client ID - {client_id}\n3. Guild ID - {guild}\n4. Role ID - {role}')
+            print(f'\nDoes this look right?\n1. Bot Token - {token}\n2. Application ID - {client_id}\n3. Guild ID - {guild}\n4. Role ID - {role}')
             if input(' -> [Y/n] ').strip(' \n').lower() != 'n':
                 break
         result = {
