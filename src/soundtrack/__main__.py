@@ -201,6 +201,10 @@ async def on_ready():
     global auto_disconnect
     if not auto_disconnect.is_running():
         await auto_disconnect.start()
+    
+    global update_tracks
+    if not update_tracks.is_running():
+        await update_tracks.start()
 
 @bot.event
 async def on_guild_join(new_guild: nextcord.Guild):
@@ -226,6 +230,17 @@ async def auto_disconnect():
         pass
     except nextcord.errors.ClientException:
         pass
+
+@tasks.loop(seconds=30)
+async def update_tracks():
+    global tracks
+    global TRACK_PATH
+    with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
+        index = yaml.full_load(file)
+    new_tracks = []
+    for t in index:
+        new_tracks.append(t)
+    tracks = new_tracks
 
 try:
     UPLOADING_GUILD = int(config['guild'])
@@ -472,7 +487,7 @@ async def rename(interaction: nextcord.Interaction,
             else:
                 for i in range(len(tracks) - 1):
                     if tracks[i] == old:
-                        del tracks[i]
+                        tracks.pop(i)
                 index[new] = index.pop(old)
                 tracks.append(new)
                 with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
