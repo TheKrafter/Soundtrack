@@ -8,12 +8,13 @@ import os
 import sys
 import yaml
 import uuid
+import time
 import pkg_resources
 from typing import Optional
 
 from xdg import BaseDirectory
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 
 from .internal.util import auto_configure, get_invite_url
 from .internal import messages
@@ -27,8 +28,10 @@ if '--help' in sys.argv or '-h' in sys.argv:
         '-h, --help     : Shows this help menu',
         '-v, --version  : Displays current installed version',
         '-i, --invite   : Generate the URL for Inviting the bot (Use `-i` for just the URL)',
-        '-c, --config   : Fetch the path of the Configuration File',
+        '-c, --config   : Print the path of the Configuration File',
+        '-d, --data     : Print the path of the Data Directory (where tracks are stored)',
         '--reconfigure  : Re-run interactive configuration',
+        '--verbose      : Show debugging Log messages',
         ' ',
         'Non-Zero Exit Codes:',
         '0  : Success',
@@ -77,12 +80,20 @@ elif '--invite' in sys.argv or '-i' in sys.argv:
 elif '--configure' in sys.argv or '-c' in sys.argv:
     print(os.path.join(BaseDirectory.xdg_config_home, 'soundtrack', 'config.yml'))
     sys.exit(0)
+elif '--data' in sys.argv or '-d' in sys.argv:
+    print(os.path.join(BaseDirectory.xdg_data_home, 'soundtrack', ''))
+    sys.exit(0)
+
+if not '--verbose' in sys.argv:
+    logger.remove(1)
+    logger.add(sys.stdout, level="INFO")
 
 logger.debug('Starting...')
 
 # Bot Definition
 intents = nextcord.Intents.default()
 intents.guilds = True
+intents.voice_states = True
 bot = commands.Bot(intents=intents)
 
 # Load Config
@@ -125,7 +136,8 @@ TRACK_PATH = os.path.join(BaseDirectory.xdg_data_home, 'soundtrack')
 guild = None
 role = None
 requests = 0
-connected = False
+voice_client = None
+stop_when_looped = False
 
 # Load Tracklist
 with open(os.path.join(TRACK_PATH, 'index.yml')) as file:
@@ -188,6 +200,17 @@ async def on_guild_join(new_guild: nextcord.Guild):
     if new_guild.id != guild.id:
         await new_guild.leave()
 
+# Auto-Disconnect Task
+@tasks.loop(seconds=15)
+async def auto_disconnect():
+    global voice_client
+    if voice_client != None:
+        if voice_client.is_connected():
+            if len(voice_client.channel.members) <= 0:
+                logger.info(ai)
+                if voice_client.is_playing() or voice_client.is_paused():
+                    voice_client.stop()
+                await voice_client.disconnect()
 # Commands
 @bot.slash_command(description='Upload a Soundtrack', dm_permission=False, guild_ids=LOCKED_GUILDS)
 async def upload(interaction: nextcord.Interaction, 
@@ -255,8 +278,132 @@ async def upload(interaction: nextcord.Interaction,
 
 @bot.slash_command(description='Play a soundtrack from your library', dm_permission=False, guild_ids=LOCKED_GUILDS)
 async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to play', required=True)):
-    await interaction.send(f'Testing, you picked track: {track}')
+    global tracks
+    if track not in tracks:
+        await interaction.send(messages.badtrack, ephemeral=True)
+    else:
+        global voice_client
+        global guild
+        if interaction.user.voice == None:
+            await interaction.send(messages.novoice, ephemeral=True)
+            return
+        elif interaction.user.voice.channel == None or interaction.user.voice.channel.guild.id != guild.id:
+            await interaction.send(messages.novoice, ephemeral=True)
+            return
+        elif interaction.user.voice.mute or interaction.user.voice.suppress:
+            await interaction.send(messages.muted, ephemeral=True)
+            return
+        
+        if voice_client == None:
+            # Connect to Voice
+            voice_client = await interaction.user.voice.channel.connect(reconnect=True)
+        
+        global TRACK_PATH
+        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
+            index = yaml.full_load(file)
+        if track not in index:
+            await interaction.send(messages.badtrack.replace('.', '!'))
+            return
+        if not os.path.exists(index[track]["intro"]) or not os.path.exists(index[track]["loop"]):
+            await interaction.send(messages.trackfiles_missing)
+            return
+        
+        await interaction.send(f'**🎜 Playing Soundtrack**\n> {track}')
 
+        if voice_client.is_playing():
+            voice_client.stop()
+        if voice_client.channel != interaction.user.voice.channel:
+            voice_client.move_to(interaction.user.voice.channel)
+
+        global current_loop 
+        global current_loop_delay
+        global already_delayed
+        current_loop = index[track]["loop"]
+        current_loop_delay = int(index[track]["delay"])
+        already_delayed = False
+        def play_loop(error):
+            global voice_client
+            global current_loop
+            global current_loop_delay
+            global already_delayed
+            if voice_client.is_connected():
+                if not already_delayed:
+                    time.sleep(current_loop_delay)
+                    already_delayed = True
+                logger.info('🎜 Playing Soundtrack Loop')
+                try:
+                    voice_client.play(nextcord.FFmpegPCMAudio(current_loop), after=play_loop)
+                except nextcord.errors.ClientException:
+                    pass
+
+        logger.info('🎜 Playing Soundtrack Intro')
+        voice_client.play(nextcord.FFmpegPCMAudio(index[track]["intro"]), after=play_loop)
+
+@bot.slash_command(description='Stop playing soundtrack', guild_ids=LOCKED_GUILDS)
+async def pause(interaction: nextcord.Interaction, when: str = nextcord.SlashOption(description='When to stop the track', choices=['Now', 'End of File'], default='Now', required=False)):
+    global voice_client
+    global guild
+    if voice_client == None:
+        await interaction.send(messages.notplaying, ephemeral=True)
+        return
+    elif not voice_client.is_playing():
+        await interaction.send(messages.notplaying, ephemeral=True)
+        return
+    elif interaction.user.voice == None:
+        await interaction.send(messages.novoice, ephemeral=True)
+        return
+    elif interaction.user.voice.channel == None or interaction.user.voice.channel.guild.id != guild.id:
+        await interaction.send(messages.novoice, ephemeral=True)
+        return
+    elif interaction.user.voice.mute or interaction.user.voice.suppress:
+        await interaction.send(messages.muted, ephemeral=True)
+        return
+
+    if when == 'Now':
+        voice_client.pause()
+        await interaction.send(f'**🎜 Paused**')
+    elif when == 'End of File':
+        global stop_when_looped
+        stop_when_looped = True
+        await interaction.send(f'**🎜** Pausing at *End of File*')
+
+@bot.slash_command(description='Continue playing soundtrack', guild_ids=LOCKED_GUILDS)
+async def resume(interaction: nextcord.Interaction):
+    global voice_client
+    if voice_client == None:
+        await interaction.send(messages.notplaying, ephemeral=True)
+        return
+    elif voice_client.is_paused():
+        voice_client.resume()
+        await interaction.send('**🎜 Resumed**')
+
+@bot.slash_command(description='Leave the Voice Channel', guild_ids=LOCKED_GUILDS)
+async def stop(interaction: nextcord.Interaction):
+    global voice_client
+    if voice_client == None:
+        await interaction.send(messages.notplaying, ephemeral=True)
+        return
+    elif voice_client.is_connected():
+        voice_client.stop()
+        await voice_client.disconnect()
+        await interaction.send('**🎜 Stopped**')
+    else:
+        await interaction.send(messages.notplaying, ephemeral=True)
+
+@bot.slash_command(description='Delete a soundtrack from the library (stops playback)', guild_ids=LOCKED_GUILDS)
+async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to delete', required=True)):
+    global role
+    global voice_client
+    if role in interaction.user.roles:
+        await voice_client.disconnect()
+        global TRACK_PATH
+        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
+            index = yaml.full_load(file)
+        
+    else:
+        await interaction.send(messages.noperm, ephemeral=True)
+
+@delete.on_autocomplete("track")
 @play.on_autocomplete("track")
 async def track_autocomplete(interaction: nextcord.Interaction, track: str):
     global tracks

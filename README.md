@@ -44,13 +44,22 @@ pip install -U flit
 git clone https://github.com/TheKrafter/Soundtrack.git
 cd Soundtrack
 
-# Install
+# Install (use `--symbolic` for development)
 flit install
 
 # Run
 python3 -m soundtrack
 ```
-    
+
+## Notes
+
+- Designed for use by a single server
+- Audio is lossy (compressed)
+- Titles must be valid YAML keys
+- Files are stored in XDG Base Directories:
+    - `config.yml` at `$XDG_CONFIG_HOME/soundtrack/config.yml`
+    - Track files and `index.yml` track index are stored in `$XDG_DATA_HOME/soundtrack/`
+- Can only be connected to 1 Voice Channel at a time
 
 ## License
 
