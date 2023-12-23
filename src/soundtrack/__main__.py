@@ -207,7 +207,7 @@ async def on_guild_join(new_guild: nextcord.Guild):
     if new_guild.id != guild.id:
         await new_guild.leave()
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=15)
 async def auto_disconnect():
     global voice_client
     global block_disconnect
