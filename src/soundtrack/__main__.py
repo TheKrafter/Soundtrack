@@ -311,6 +311,8 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
         elif interaction.user.voice.mute or interaction.user.voice.suppress:
             await interaction.send(messages.muted, ephemeral=True)
             return
+
+        await interaction.guild.change_voice_state(self_deaf=True, self_mute=False)
         
         if voice_client == None:
             # Connect to Voice
