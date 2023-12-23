@@ -447,15 +447,9 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
         with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
             index = yaml.full_load(file)
         if track in index:
-            try:
-                index.pop(track)
-                os.remove(index[track]["intro"])
-                os.remove(index[track]["loop"])
-            except ValueError:
-                pass
-            except BaseException as e:
-                await interaction.send(f'**Could not delete Track!** Unexpected error occurred: \n```\n{str(e)}\n```')
-                return
+            index.pop(track)
+            os.remove(index[track]["intro"])
+            os.remove(index[track]["loop"])
             with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
                 yaml.dump(index, file)
             await interaction.send(f'Removed soundtrack *{track}* from library.')
