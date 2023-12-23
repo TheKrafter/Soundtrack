@@ -140,10 +140,14 @@ voice_client = None
 stop_when_looped = False
 
 # Load Tracklist
-with open(os.path.join(TRACK_PATH, 'index.yml')) as file:
-    index = yaml.full_load(file)
-
-tracks = [name for name in index]
+try:
+    with open(os.path.join(TRACK_PATH, 'index.yml')) as file:
+        index = yaml.full_load(file)
+    if index == None:
+        index = {}
+    tracks = [name for name in index]
+except FileNotFoundError:
+    tracks = []
 
 data_dir = os.path.join(BaseDirectory.xdg_data_home, 'soundtrack')
 os.makedirs(f"{data_dir}", exist_ok=True)
