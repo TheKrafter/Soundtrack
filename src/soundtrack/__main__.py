@@ -224,7 +224,7 @@ async def auto_disconnect():
 try:
     UPLOADING_GUILD = int(config['guild'])
 except ValueError:
-    logger.error(f'{config['guild']} is not a valid Guild ID! Either edit {config_path} manually, or run with `--reconfigure`!')
+    logger.error(f'{config["guild"]} is not a valid Guild ID! Either edit {config_path} manually, or run with `--reconfigure`!')
     sys.exit(20)
 
 # Commands
