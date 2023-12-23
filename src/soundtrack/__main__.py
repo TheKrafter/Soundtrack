@@ -235,6 +235,7 @@ async def auto_disconnect():
 async def update_tracks():
     global tracks
     global TRACK_PATH
+    logger.debug('🎜 Refreshing Track List...')
     with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
         index = yaml.full_load(file)
     new_tracks = []
