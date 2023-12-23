@@ -5,24 +5,6 @@ A Discord Bot to play soundtracks in VC
 
 Intended for Dungeons and Dragons campaigns, for cool music stuffs :).
 
-## Roadmap
-
-- [ ] Basic bot stuff
-- [ ] Upload Tracks
-    - [ ] Command to upload into/loop pair, set delay, and name
-    - [ ] Flat file config to store above stuffs
-    - [ ] Command to remove intro/loop pair by name
-- [ ] Playing Tracks
-    - [ ] Autocompletion for track names
-    - [ ] Play
-        1. Play intro track
-        2. Wait for delay duration
-        3. Loop the looped track forever
-    - [ ] Pause
-        - [ ] Pause
-        - [ ] Stop at end of loop
-        - [ ] Fade out and stop
-
 ## Running
 
 #### Prerequisites
@@ -37,7 +19,7 @@ pip install -U flit
 
 #### Install
 
-*Note: Soundtrack has only been tested on Linux. While portability has been kept in mind, *
+*Note: Soundtrack has only been tested on Linux. While portability has been kept in mind, other operating systems are not supported and incompatibility will not be fixed.*
 
 ```sh
 # Get the code
