@@ -94,6 +94,7 @@ logger.debug('Starting...')
 intents = nextcord.Intents.default()
 intents.guilds = True
 intents.voice_states = True
+intents.members = True
 bot = commands.Bot(intents=intents)
 
 # Load Config
@@ -207,12 +208,13 @@ async def on_guild_join(new_guild: nextcord.Guild):
     if new_guild.id != guild.id:
         await new_guild.leave()
 
-@tasks.loop(seconds=15)
+@tasks.loop(seconds=5)
 async def auto_disconnect():
     global voice_client
     global block_disconnect
+    global guild
     try:
-        if voice_client.channel.members[0].id == bot.user.id and voice_client.is_connected() and not block_disconnect:
+        if len(voice_client.channel.members) <= 1 and guild.me in voice_client.channel.members and voice_client.is_connected() and not block_disconnect:
             voice_client.stop()
             await voice_client.disconnect()
             logger.info('🎜 Automatically Disconnected.')
@@ -299,7 +301,7 @@ async def upload(interaction: nextcord.Interaction,
 @bot.slash_command(description='Play a soundtrack from the library', dm_permission=False)
 async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to play', required=True)):
     global tracks
-    if track not in tracks:
+    if not track in tracks:
         await interaction.send(messages.badtrack, ephemeral=True)
     else:
         global voice_client
