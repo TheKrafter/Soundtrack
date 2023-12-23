@@ -241,6 +241,7 @@ async def update_tracks():
     for t in index:
         new_tracks.append(t)
     tracks = new_tracks
+    logger.debug('🎜 Refreshed Track List from Disk')
 
 try:
     UPLOADING_GUILD = int(config['guild'])
