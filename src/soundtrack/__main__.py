@@ -216,6 +216,8 @@ async def auto_disconnect():
             voice_client.stop()
             await voice_client.disconnect()
             logger.info('🎜 Automatically Disconnected.')
+        else:
+            block_disconnect = False
     except ValueError:
         pass
     except AttributeError:
