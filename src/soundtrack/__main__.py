@@ -212,7 +212,7 @@ async def auto_disconnect():
     global voice_client
     global block_disconnect
     try:
-        if len(voice_client.channel.members) <= 1 and voice_client.is_connected() and not block_disconnect:
+        if voice_client.channel.members[0].id == bot.user.id and voice_client.is_connected() and not block_disconnect:
             voice_client.stop()
             await voice_client.disconnect()
             logger.info('🎜 Automatically Disconnected.')
