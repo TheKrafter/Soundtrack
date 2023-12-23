@@ -447,9 +447,9 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
         with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
             index = yaml.full_load(file)
         if track in index:
-            index.pop(track)
             os.remove(index[track]["intro"])
             os.remove(index[track]["loop"])
+            index.pop(track)
             with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
                 yaml.dump(index, file)
             await interaction.send(f'Removed soundtrack *{track}* from library.')
