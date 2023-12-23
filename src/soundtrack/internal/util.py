@@ -32,6 +32,11 @@ def auto_configure():
             guild = input(' -> ').strip(' \n')
             print('4. Paste the ID of the Role in said Guild that has permission to upload and edit soundtracks.')
             role = input(' -> ').strip(' \n')
+            print('5. Should this bot be specifically locked to your guild? If not, you can still only upload and delete tracks within said guild.')
+            if input(' -> [Y/n] ').strip(' \n').lower() != 'n':
+                locked = False
+            else:
+                locked = True
 
             print(f'\nDoes this look right?\n1. Bot Token - {token}\n2. Application ID - {client_id}\n3. Guild ID - {guild}\n4. Role ID - {role}')
             if input(' -> [Y/n] ').strip(' \n').lower() != 'n':
@@ -41,6 +46,7 @@ def auto_configure():
             "token": token,
             "client_id": client_id,
             "role": role,
+            "locked": locked,
         }
         logger.info('Interactive configuration complete.')
         return result

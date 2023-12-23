@@ -187,10 +187,14 @@ async def on_ready():
         logger.success(f'Connected and ready to use!')
     else:
         logger.success(f'Invite to your Guild: {get_invite_url(config["client_id"])}')
-    
-    for g in bot.guilds:
-        if g != guild:
-            await g.leave()
+
+    if 'locked' in config:
+        if not config['locked']:
+            logger.info('Soundtrack is not guild-locked!')
+    else:
+        for g in bot.guilds:
+            if g != guild:
+                await g.leave()
 
     global auto_disconnect
     if not auto_disconnect.is_running():
@@ -217,8 +221,14 @@ async def auto_disconnect():
     except nextcord.errors.ClientException:
         pass
 
+try:
+    UPLOADING_GUILD = int(config['guild'])
+except ValueError:
+    logger.error(f'{config['guild']} is not a valid Guild ID! Either edit {config_path} manually, or run with `--reconfigure`!')
+    sys.exit(20)
+
 # Commands
-@bot.slash_command(description='Upload a Soundtrack', dm_permission=False)
+@bot.slash_command(description='Upload a Soundtrack', dm_permission=False, guild_ids=[UPLOADING_GUILD])
 async def upload(interaction: nextcord.Interaction, 
     title: str = nextcord.SlashOption(description='The title for this soundtrack', min_length=3, max_length=45, required=True),
     intro: nextcord.Attachment = nextcord.SlashOption(description='Track to play at start of soundtrack', required=True),
@@ -318,6 +328,9 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
 
         if voice_client.is_playing():
             voice_client.stop()
+        if not voice_client.is_connected():
+            # Reconnect if not connected
+            voice_client = await interaction.user.voice.channel.connect(reconnect=True)
         if voice_client.channel != interaction.user.voice.channel:
             voice_client.move_to(interaction.user.voice.channel)
 
@@ -400,7 +413,7 @@ async def stop(interaction: nextcord.Interaction):
     else:
         await interaction.send(messages.notplaying, ephemeral=True)
 
-@bot.slash_command(description='Delete a soundtrack from the library (stops playback)', dm_permission=False)
+@bot.slash_command(description='Delete a soundtrack from the library (stops playback)', dm_permission=False, guild_ids=[UPLOADING_GUILD])
 async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to delete', required=True)):
     global role
     global voice_client
