@@ -361,7 +361,7 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
                 stop_when_looped = False
                 logger.info('🎜 Soundtrack Ended.')
         
-        await interaction.guild.change_voice_state(interaction.user.voice.channel, self_deaf=True, self_mute=False)
+        await interaction.guild.change_voice_state(channel=interaction.user.voice.channel, self_deaf=True, self_mute=False)
 
         logger.info('🎜 Playing Soundtrack Intro')
         global block_disconnect
