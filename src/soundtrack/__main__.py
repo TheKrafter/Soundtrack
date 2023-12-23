@@ -231,7 +231,7 @@ async def auto_disconnect():
     except nextcord.errors.ClientException:
         pass
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=5)
 async def update_tracks():
     global tracks
     global TRACK_PATH
@@ -444,8 +444,9 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
     global role
     global voice_client
     if role in interaction.user.roles:
-        voice_client.stop()
-        await voice_client.disconnect()
+        if voice_client != None:
+            voice_client.stop()
+            await voice_client.disconnect()
         global TRACK_PATH
         global tracks
         with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
@@ -476,8 +477,9 @@ async def rename(interaction: nextcord.Interaction,
     global role
     global voice_client
     if role in interaction.user.roles:
-        voice_client.stop()
-        await voice_client.disconnect()
+        if voice_client != None:
+            voice_client.stop()
+            await voice_client.disconnect()
         global TRACK_PATH
         global tracks
         with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
