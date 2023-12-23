@@ -125,12 +125,6 @@ else:
         logger.info('Configuration complete!')
 
 # Global Variables
-try:
-    LOCKED_GUILDS = [int(config["guild"])]
-    PERMISSION_ROLE = [int(config["role"])]
-except ValueError:
-    logger.error(f'Either `guild` or `role` is not a valid integer! Edit {config_path} or run with `--reconfigure` and be sure to use valid IDs.')
-    sys.exit(20)
 TRACK_PATH = os.path.join(BaseDirectory.xdg_data_home, 'soundtrack')
 
 guild = None
@@ -224,7 +218,7 @@ async def auto_disconnect():
         pass
 
 # Commands
-@bot.slash_command(description='Upload a Soundtrack', dm_permission=False, guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Upload a Soundtrack', dm_permission=False)
 async def upload(interaction: nextcord.Interaction, 
     title: str = nextcord.SlashOption(description='The title for this soundtrack', min_length=3, max_length=45, required=True),
     intro: nextcord.Attachment = nextcord.SlashOption(description='Track to play at start of soundtrack', required=True),
@@ -288,7 +282,7 @@ async def upload(interaction: nextcord.Interaction,
     else:
         await interaction.send(messages.noperm, ephemeral=True)
 
-@bot.slash_command(description='Play a soundtrack from your library', dm_permission=False, guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Play a soundtrack from your library', dm_permission=False)
 async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to play', required=True)):
     global tracks
     if track not in tracks:
@@ -355,7 +349,7 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
         logger.info('🎜 Playing Soundtrack Intro')
         voice_client.play(nextcord.FFmpegPCMAudio(index[track]["intro"]), after=play_loop)
 
-@bot.slash_command(description='Stop playing soundtrack', guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Stop playing soundtrack', dm_permission=False)
 async def pause(interaction: nextcord.Interaction, when: str = nextcord.SlashOption(description='When to stop the track', choices=['Now', 'End of File'], default='Now', required=False)):
     global voice_client
     global guild
@@ -383,7 +377,7 @@ async def pause(interaction: nextcord.Interaction, when: str = nextcord.SlashOpt
         stop_when_looped = True
         await interaction.send(f'**🎜** Pausing at *End of File*')
 
-@bot.slash_command(description='Continue playing soundtrack', guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Continue playing soundtrack', dm_permission=False)
 async def resume(interaction: nextcord.Interaction):
     global voice_client
     if voice_client == None:
@@ -393,7 +387,7 @@ async def resume(interaction: nextcord.Interaction):
         voice_client.resume()
         await interaction.send('**🎜 Resumed**')
 
-@bot.slash_command(description='Leave the Voice Channel', guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Leave the Voice Channel', dm_permission=False)
 async def stop(interaction: nextcord.Interaction):
     global voice_client
     if voice_client == None:
@@ -406,7 +400,7 @@ async def stop(interaction: nextcord.Interaction):
     else:
         await interaction.send(messages.notplaying, ephemeral=True)
 
-@bot.slash_command(description='Delete a soundtrack from the library (stops playback)', guild_ids=LOCKED_GUILDS)
+@bot.slash_command(description='Delete a soundtrack from the library (stops playback)', dm_permission=False)
 async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to delete', required=True)):
     global role
     global voice_client
