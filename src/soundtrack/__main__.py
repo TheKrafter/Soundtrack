@@ -436,11 +436,12 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
                 for i in range(len(tracks) - 1):
                     if tracks[i] == track:
                         del tracks[i]
-                await interaction.send(f'Removed soundtrack *{track}* from library.')
             except ValueError:
                 pass
             except BaseException as e:
                 await interaction.send(f'**Could not delete Track!** Unexpected error occurred: \n```\n{e}\n```')
+                return
+            await interaction.send(f'Removed soundtrack *{track}* from library.')
         else:
             await interaction.send(messages.badtrack, ephemeral=True)
     else:
