@@ -198,13 +198,9 @@ async def on_ready():
             if g != guild:
                 await g.leave()
 
-    global auto_disconnect
-    if not auto_disconnect.is_running():
-        await auto_disconnect.start()
-    
-    global update_tracks
-    if not update_tracks.is_running():
-        await update_tracks.start()
+    global task
+    if not task.is_running():
+        await task.start()
 
 @bot.event
 async def on_guild_join(new_guild: nextcord.Guild):
@@ -213,7 +209,7 @@ async def on_guild_join(new_guild: nextcord.Guild):
         await new_guild.leave()
 
 @tasks.loop(seconds=5)
-async def auto_disconnect():
+async def task():
     global voice_client
     global block_disconnect
     global guild
@@ -231,8 +227,6 @@ async def auto_disconnect():
     except nextcord.errors.ClientException:
         pass
 
-@tasks.loop(seconds=5)
-async def update_tracks():
     global tracks
     global TRACK_PATH
     logger.debug('🎜 Refreshing Track List...')
@@ -242,7 +236,7 @@ async def update_tracks():
     for t in index:
         new_tracks.append(t)
     tracks = new_tracks
-    logger.debug('🎜 Refreshed Track List from Disk')
+    logger.debug('🎜 Refreshed Track List from Disk')   
 
 try:
     UPLOADING_GUILD = int(config['guild'])
