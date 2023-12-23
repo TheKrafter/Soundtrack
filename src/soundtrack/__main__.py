@@ -468,7 +468,7 @@ async def rename(interaction: nextcord.Interaction,
             index = yaml.full_load(file)
         if old in index:
             if '#' in new or '>' in new or '.' in new or '-' in new:
-                await interaction.send(messages.badname, ephemeral=True)
+                await interaction.send(messages.badrename, ephemeral=True)
             else:
                 for i in range(len(tracks) - 1):
                     if tracks[i] == old:
