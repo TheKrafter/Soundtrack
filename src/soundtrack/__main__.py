@@ -194,23 +194,31 @@ async def on_ready():
         if g != guild:
             await g.leave()
 
+    global auto_disconnect
+    if not auto_disconnect.is_running():
+        await auto_disconnect.start()
+
 @bot.event
 async def on_guild_join(new_guild: nextcord.Guild):
     global guild
     if new_guild.id != guild.id:
         await new_guild.leave()
 
-# Auto-Disconnect Task
-@tasks.loop(seconds=15)
+@tasks.loop(seconds=5)
 async def auto_disconnect():
     global voice_client
-    if voice_client != None:
-        if voice_client.is_connected():
-            if len(voice_client.channel.members) <= 0:
-                logger.info(ai)
-                if voice_client.is_playing() or voice_client.is_paused():
-                    voice_client.stop()
-                await voice_client.disconnect()
+    try:
+        if len(voice_client.channel.members) <= 1 and voice_client.is_connected():
+            voice_client.stop()
+            await voice_client.disconnect()
+            logger.info('🎜 Automatically Disconnected.')
+    except ValueError:
+        pass
+    except AttributeError:
+        pass
+    except nextcord.errors.ClientException:
+        pass
+
 # Commands
 @bot.slash_command(description='Upload a Soundtrack', dm_permission=False, guild_ids=LOCKED_GUILDS)
 async def upload(interaction: nextcord.Interaction, 
@@ -326,7 +334,8 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
             global current_loop
             global current_loop_delay
             global already_delayed
-            if voice_client.is_connected():
+            global stop_when_looped
+            if voice_client.is_connected() and not stop_when_looped:
                 if not already_delayed:
                     time.sleep(current_loop_delay)
                     already_delayed = True
@@ -335,6 +344,9 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
                     voice_client.play(nextcord.FFmpegPCMAudio(current_loop), after=play_loop)
                 except nextcord.errors.ClientException:
                     pass
+            else:
+                stop_when_looped = False
+                logger.info('🎜 Soundtrack Ended.')
 
         logger.info('🎜 Playing Soundtrack Intro')
         voice_client.play(nextcord.FFmpegPCMAudio(index[track]["intro"]), after=play_loop)

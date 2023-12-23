@@ -37,7 +37,7 @@ pip install -U flit
 
 #### Install
 
-*Note: Soundtrack has only been tested on Linux, other operating systems are not supported or reccommended.*
+*Note: Soundtrack has only been tested on Linux. While portability has been kept in mind, *
 
 ```sh
 # Get the code
