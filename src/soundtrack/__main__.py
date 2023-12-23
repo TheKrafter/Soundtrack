@@ -132,6 +132,7 @@ role = None
 requests = 0
 voice_client = None
 stop_when_looped = False
+block_disconnect = False
 
 # Load Tracklist
 try:
@@ -209,8 +210,9 @@ async def on_guild_join(new_guild: nextcord.Guild):
 @tasks.loop(seconds=5)
 async def auto_disconnect():
     global voice_client
+    global block_disconnect
     try:
-        if len(voice_client.channel.members) <= 1 and voice_client.is_connected():
+        if len(voice_client.channel.members) <= 1 and voice_client.is_connected() and not block_disconnect:
             voice_client.stop()
             await voice_client.disconnect()
             logger.info('🎜 Automatically Disconnected.')
@@ -360,6 +362,8 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
                 logger.info('🎜 Soundtrack Ended.')
 
         logger.info('🎜 Playing Soundtrack Intro')
+        global block_disconnect
+        block_disconnect = True
         voice_client.play(nextcord.FFmpegPCMAudio(index[track]["intro"]), after=play_loop)
 
 @bot.slash_command(description='Stop playing soundtrack', dm_permission=False)
@@ -418,11 +422,27 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
     global role
     global voice_client
     if role in interaction.user.roles:
+        voice_client.stop()
         await voice_client.disconnect()
         global TRACK_PATH
+        global tracks
         with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
             index = yaml.full_load(file)
-        
+        if track in index:
+            try:
+                os.remove(index[track]["intro"])
+                os.remove(index[track]["loop"])
+                del index[track]
+                for i in range(len(tracks) - 1):
+                    if tracks[i] == track:
+                        del tracks[i]
+                await interaction.send(f'Removed soundtrack *{track}* from library.')
+            except ValueError:
+                pass
+            except BaseException as e:
+                await interaction.send(f'**Could not delete Track!** Unexpected error occurred: \n```\n{e}\n```')
+        else:
+            await interaction.send(messages.badtrack, ephemeral=True)
     else:
         await interaction.send(messages.noperm, ephemeral=True)
 
