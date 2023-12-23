@@ -64,7 +64,7 @@ elif '--invite' in sys.argv or '-i' in sys.argv:
             page = [
                 "🎜 Soundtrack",
                 "Invite to your Guild with the following URL:",
-                f"    {get_invite_url(cfg["client_id"])}",
+                f"    {get_invite_url(cfg['client_id'])}",
             ]
             for i in page:
                 print(i)
