@@ -432,12 +432,12 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
             index = yaml.full_load(file)
         if track in index:
             try:
-                os.remove(index[track]["intro"])
-                os.remove(index[track]["loop"])
-                del index[track]
                 for i in range(len(tracks) - 1):
                     if tracks[i] == track:
                         del tracks[i]
+                del index[track]
+                os.remove(index[track]["intro"])
+                os.remove(index[track]["loop"])
             except ValueError:
                 pass
             except BaseException as e:
