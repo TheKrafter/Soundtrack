@@ -292,11 +292,11 @@ async def upload(interaction: nextcord.Interaction,
         logger.debug(f'{r}: Added to index')
         # Report Success
         logger.success(f'Added Soundtrack: "{title}"!')
-        await interaction.send(f'**Added new Soundtrack!**\n*{title}* is now a part of your library.')
+        await interaction.send(f'**Added new Soundtrack!**\n*{title}* is now a part of the library.')
     else:
         await interaction.send(messages.noperm, ephemeral=True)
 
-@bot.slash_command(description='Play a soundtrack from your library', dm_permission=False)
+@bot.slash_command(description='Play a soundtrack from the library', dm_permission=False)
 async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to play', required=True)):
     global tracks
     if track not in tracks:
@@ -451,6 +451,37 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
     else:
         await interaction.send(messages.noperm, ephemeral=True)
 
+@bot.slash_command(description='Rename a soundtrack in the library (stops playback)', dm_permission=False, guild_ids=[UPLOADING_GUILD])
+async def rename(interaction: nextcord.Interaction,
+    old: str = nextcord.SlashOption(description='The current name of the track', required=True),
+    new: str = nextcord.SlashOption(description='The new name of the soundtrack', required=True, min_length=3, max_length=45)):
+    global role
+    global voice_client
+    if role in interaction.user.roles:
+        voice_client.stop()
+        await voice_client.disconnect()
+        global TRACK_PATH
+        global tracks
+        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
+            index = yaml.full_load(file)
+        if old in index:
+            if '#' in new or '>' in new or '.' in new or '-' in new:
+                await interaction.send(messages.badname, ephemeral=True)
+            else:
+                for i in range(len(tracks) - 1):
+                    if tracks[i] == old:
+                        del tracks[i]
+                index[new] = index.pop(old)
+                tracks.append(new)
+                with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
+                    yaml.dump(index, file)
+                await interaction.send(f'Renamed *{nextcord.utils.escape_markdown(old)}* to *{nextcord.utils.escape_markdown(new)}*.')
+        else:
+            await interaction.send(messages.badtrack, ephemeral=True)
+    else:
+        await interaction.send(messages.noperm, ephemeral=True)
+
+@rename.on_autocomplete("old")
 @delete.on_autocomplete("track")
 @play.on_autocomplete("track")
 async def track_autocomplete(interaction: nextcord.Interaction, track: str):
