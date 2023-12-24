@@ -1,9 +1,10 @@
-<div align="center"><img src="src/assets/icon.png"></div>
+<div align="center"><img src="src/assets/icon.png" width="150px">
 
 # Soundtrack
 A Discord Bot to play soundtracks in VC
 
 Intended for Dungeons and Dragons campaigns, for cool music stuffs :).
+</div>
 
 ## Running
 
