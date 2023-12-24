@@ -1,6 +1,8 @@
 <div align="center"><img src="src/assets/icon.png" width="150px">
 
 # Soundtrack
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G2G5DO1DO)
+
 A Discord Bot to play soundtracks in VC
 
 Intended for Dungeons and Dragons campaigns, for cool music stuffs :).
