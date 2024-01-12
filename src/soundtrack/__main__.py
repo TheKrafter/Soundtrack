@@ -134,6 +134,7 @@ requests = 0
 voice_client = None
 stop_when_looped = False
 block_disconnect = False
+latest_track = None
 
 # Load Tracklist
 try:
@@ -381,6 +382,8 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
         logger.info('🎜 Playing Soundtrack Intro')
         global block_disconnect
         block_disconnect = True
+        global latest_track
+        latest_track = track
         voice_client.play(nextcord.FFmpegPCMAudio(index[track]["intro"]), after=play_loop)
 
 @bot.slash_command(description='Stop playing soundtrack', dm_permission=False)
@@ -424,11 +427,13 @@ async def resume(interaction: nextcord.Interaction):
 @bot.slash_command(description='Leave the Voice Channel', dm_permission=False)
 async def stop(interaction: nextcord.Interaction):
     global voice_client
+    global latest_track
     if voice_client == None:
         await interaction.send(messages.notplaying, ephemeral=True)
         return
     elif voice_client.is_connected():
         voice_client.stop()
+        latest_track = None
         await voice_client.disconnect()
         await interaction.send('**🎜 Stopped**')
     else:
@@ -438,8 +443,9 @@ async def stop(interaction: nextcord.Interaction):
 async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashOption(description='The name of the soundtrack to delete', required=True)):
     global role
     global voice_client
+    global latest_track
     if role in interaction.user.roles:
-        if voice_client != None:
+        if voice_client != None and track == latest_track:
             voice_client.stop()
             await voice_client.disconnect()
         global TRACK_PATH
