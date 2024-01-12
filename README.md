@@ -36,6 +36,8 @@ flit install
 python3 -m soundtrack
 ```
 
+*Note: You must enable the **Server Members Intent** for your bot in the Discord Developers Portal.*
+
 ## Notes
 
 - Designed for use by a single server
