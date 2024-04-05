@@ -14,7 +14,8 @@ requires-python = ">=3.10"
 dependencies = [
     "nextcord[voice]",
     "logging42",
-    "pyxdg"
+    "pyxdg",
+    "importlib",
 ]
 
 [project.urls]

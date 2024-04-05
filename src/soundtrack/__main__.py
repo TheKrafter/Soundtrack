@@ -9,7 +9,7 @@ import sys
 import yaml
 import uuid
 import time
-import pkg_resources
+import importlib.metadata
 from typing import Optional
 
 from xdg import BaseDirectory
@@ -19,6 +19,7 @@ from nextcord.ext import commands, tasks
 from .internal.util import auto_configure, get_invite_url
 from .internal import messages
 
+PACKAGE_NAME = 'soundtrack'
 
 # CLI
 if '--help' in sys.argv or '-h' in sys.argv:
@@ -45,7 +46,7 @@ if '--help' in sys.argv or '-h' in sys.argv:
     sys.exit(0)
 elif '--version' in sys.argv or '-v' in sys.argv:
     page = [
-        f'🎜 Soundtrack v{pkg_resources.get_distribution(__package__).version}',
+        f'🎜 Soundtrack v{importlib.metadata.version(PACKAGE_NAME)}',
         'Copyright (c) 2023 Krafter Developer, et al.',
         'Licensed under the MIT License. https://mit-license.org/',
         'Source on GitHub: https://github.com/TheKrafter/Soundtrack'
@@ -158,7 +159,7 @@ async def on_ready():
     msg = [
         " ",
         " --------------------",
-        f" 🎜 Soundtrack v{pkg_resources.get_distribution(__package__).version}",
+        f" 🎜 Soundtrack v{importlib.metadata.version(PACKAGE_NAME)}",
         "    © 2023 Krafter",
         "    MIT License",
         " --------------------",
