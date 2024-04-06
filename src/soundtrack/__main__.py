@@ -137,15 +137,55 @@ stop_when_looped = False
 block_disconnect = False
 latest_track = None
 
-# Load Tracklist
-try:
-    with open(os.path.join(TRACK_PATH, 'index.yml')) as file:
-        index = yaml.full_load(file)
-    if index == None:
-        index = {}
+## Refreshable global variables
+index = None
+tracks = []
+phases = {}
+
+## Refreshing functions
+def refresh_index(also_tracks=True):
+    """ Refreshes the `index` global variable (track index) """
+    global index
+    global TRACK_PATH
+    try:
+        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
+            index = yaml.full_load(file)
+        if index == None:
+            index = {}
+    except FileNotFoundError:
+        index = None
+        logger.warning("🎜 Could not find track index! If you do not have any tracks added yet, this file will be created when you add one.")
+        return
+    logger.debug('Refreshed the track index from disk')
+
+    if also_tracks:
+        refresh_tracks()
+
+def refresh_tracks():
+    """ Refreshes the `tracks` global variable (track list) """
+    global tracks
+    global index
     tracks = [name for name in index]
-except FileNotFoundError:
-    tracks = []
+    logger.debug('Refreshed the list of tracks from the track index')
+
+def refresh_phases():
+    """ Refreshes the `phases` global variable (phase list) """
+    global tracks
+    global index
+    global phases
+    phases = {}
+    for track in tracks:
+        if 'phases' in index[track]:
+            for phase in index[track]['phases']:
+                if track in phases:
+                    phases[track].append(phase)
+                else:
+                    phases[track] = [phase]
+
+# Initial load
+refresh_index()
+refresh_tracks()
+refresh_phases()
 
 data_dir = os.path.join(BaseDirectory.xdg_data_home, 'soundtrack')
 os.makedirs(f"{data_dir}", exist_ok=True)
@@ -229,17 +269,6 @@ async def task():
     except nextcord.errors.ClientException:
         pass
 
-    global tracks
-    global TRACK_PATH
-    logger.debug('🎜 Refreshing Track List...')
-    with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
-        index = yaml.full_load(file)
-    new_tracks = []
-    for t in index:
-        new_tracks.append(t)
-    tracks = new_tracks
-    logger.debug('🎜 Refreshed Track List from Disk')   
-
 try:
     UPLOADING_GUILD = int(config['guild'])
 except ValueError:
@@ -270,19 +299,19 @@ async def upload(interaction: nextcord.Interaction,
             await interaction.send(messages.notaudio, ephemeral=True)
             logger.debug(f'{r}: Soundtrack Upload Request Cancelled. Media was not of proper type.')
             return
+        
+        await interaction.response.defer()
+        
         # Get Index
+        global index
         global TRACK_PATH
         index_path = os.path.join(TRACK_PATH, 'index.yml')
-        await interaction.response.defer()
-        try:
-            with open(index_path, "r") as file:
-                index = yaml.full_load(file)
-            if index == None:
-                raise FileNotFoundError
-            logger.debug(f'{r}: Found existing Track Index at {index_path}')
-        except FileNotFoundError:
+        if index == None:
             logger.debug(f'{r}: No Track Index at {index_path}, will save new index to it.')
             index = {}
+        else:
+            logger.debug(f'{r}: Found existing Track Index at {index_path}')
+            
         # Save Files
         intro_path = os.path.join(TRACK_PATH, f'{str(uuid.uuid4())}.mp3')
         loop_path = os.path.join(TRACK_PATH, f'{str(uuid.uuid4())}.mp3')
@@ -304,6 +333,7 @@ async def upload(interaction: nextcord.Interaction,
                 index_current = {}
             index_new = index_current | index
             yaml.dump(index_new, file)
+        refresh_index()
         logger.debug(f'{r}: Added to index')
         # Report Success
         logger.success(f'Added Soundtrack: "{title}"!')
@@ -333,9 +363,7 @@ async def play(interaction: nextcord.Interaction, track: str = nextcord.SlashOpt
             # Connect to Voice
             voice_client = await interaction.user.voice.channel.connect(reconnect=True)
         
-        global TRACK_PATH
-        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
-            index = yaml.full_load(file)
+        global index
         if track not in index:
             await interaction.send(messages.badtrack.replace('.', '!'))
             return
@@ -450,13 +478,13 @@ async def delete(interaction: nextcord.Interaction, track: str = nextcord.SlashO
             voice_client.stop()
             await voice_client.disconnect()
         global TRACK_PATH
-        global tracks
-        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
-            index = yaml.full_load(file)
+        global index
         if track in index:
             os.remove(index[track]["intro"])
             os.remove(index[track]["loop"])
             index.pop(track)
+            refresh_tracks()
+            refresh_phases()
             with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
                 yaml.dump(index, file)
             await interaction.send(f'Removed soundtrack *{track}* from library.')
@@ -477,14 +505,14 @@ async def rename(interaction: nextcord.Interaction,
             await voice_client.disconnect()
         global TRACK_PATH
         global tracks
-        with open(os.path.join(TRACK_PATH, 'index.yml'), "r") as file:
-            index = yaml.full_load(file)
+        global index
         if old in index:
             if '#' in new or '>' in new or '.' in new or '-' in new:
                 await interaction.send(messages.badrename, ephemeral=True)
             else:
                 index[new] = index.pop(old)
-                tracks.append(new)
+                refresh_tracks()
+                refresh_phases()
                 with open(os.path.join(TRACK_PATH, 'index.yml'), "w") as file:
                     yaml.dump(index, file)
                 await interaction.send(f'Renamed *{nextcord.utils.escape_markdown(old)}* to *{nextcord.utils.escape_markdown(new)}*.')
