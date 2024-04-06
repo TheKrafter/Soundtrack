@@ -45,6 +45,7 @@ python3 -m soundtrack
 - Titles must be valid YAML keys
 - Files are stored in XDG Base Directories:
     - `config.yml` at `$XDG_CONFIG_HOME/soundtrack/config.yml`
+        - *To quickly edit your config file, try `nano $(python -m soundtrack -c)`!*
     - Track files and `index.yml` track index are stored in `$XDG_DATA_HOME/soundtrack/`
 - Can only be connected to 1 Voice Channel at a time
 
