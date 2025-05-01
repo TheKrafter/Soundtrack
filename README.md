@@ -8,6 +8,8 @@ A Discord Bot to play soundtracks in VC
 Intended for Dungeons and Dragons campaigns, for cool music stuffs :).
 </div>
 
+## This project has moved to [Codeberg](https://codeberg.org/krafter/Soundtrack).
+
 ## Running
 
 #### Prerequisites
